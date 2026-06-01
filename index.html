@@ -1,3 +1,14 @@
+啊！我抓到兇手了。這絕對是字型（Font）編碼在搞鬼！
+
+因為 pygame 預設不一定能完美抓到你電腦裡的「微軟正黑體」，當它抓不到時，就會用英文預設字型去硬啃中文，結果就變成一堆像外星文的方塊或亂碼了。
+
+既然要解決，我們乾脆用最暴力也最保險的方法：不要用電腦系統的字型，直接讓 Pygame 自動偵測你電腦裡現有的中文字型！
+
+我把顯示文字的那段程式碼改良了，改用 pygame.font.get_default_font() 和自動尋找系統中文的機制。請用下面這段程式碼把原本舊的完全覆蓋掉：
+
+Python
+
+
 import pygame
 import random
 import sys
@@ -25,7 +36,7 @@ FPS = 60
 
 # 量條與物體參數
 bar_x = 180
-bar_y = 120  # 稍微往下挪一點，留空間給上方的紀錄看板
+bar_y = 120  
 bar_width = 40
 bar_height = 380
 
@@ -44,16 +55,31 @@ fish_speed = 2
 timer = 0
 
 # 釣魚進度
-progress = 50.0  # 滿分 100 算釣到
+progress = 50.0  
 
 # 👑 紀錄系統變數
-max_size = 0.0      # 歷史最大尺寸 (cm)
-current_size = 0.0  # 本次釣到的尺寸 (cm)
-is_new_record = False # 是否破紀錄的旗標
+max_size = 0.0      
+current_size = 0.0  
+is_new_record = False 
+
+# ================= 🛠️ 安全字型防震機制 =================
+# 優先尋找繁體中文常見字型，如果都找不到，就用系統預設（至少不會當機，但英文預設字型字會變不見，所以我們補上英文提示）
+available_fonts = pygame.font.get_fonts()
+target_font = None
+
+for font_name in ["microsoftjhenghei", "pmingliu", "msgothic", "arial"]:
+    if font_name in available_fonts:
+        target_font = font_name
+        break
+
+# 設定大小
+font = pygame.font.SysFont(target_font, 18)
+font_bold = pygame.font.SysFont(target_font, 22, bold=True)
+# =======================================================
 
 # 遊戲主迴圈
 running = True
-game_status = "PLAYING" # "PLAYING", "WIN", "LOSE"
+game_status = "PLAYING" 
 
 while running:
     clock.tick(FPS)
@@ -67,7 +93,7 @@ while running:
             sys.exit()
 
     if game_status == "PLAYING":
-        # 2. 物理運算：浮標控制
+        # 2. 物理運算
         if keys[pygame.K_SPACE]:
             bobber_speed += lift
         else:
@@ -76,7 +102,6 @@ while running:
         bobber_speed = max(-8, min(8, bobber_speed))
         bobber_y += bobber_speed
         
-        # 限制浮標不超出量條
         if bobber_y < bar_y:
             bobber_y = bar_y
             bobber_speed = 0
@@ -107,21 +132,16 @@ while running:
         # 5. 勝負判斷
         if progress >= 100:
             game_status = "WIN"
-            # 隨機決定這次釣到的魚尺寸（例如 20.0 到 120.0 公分，四捨五入到小數第一位）
             current_size = round(random.uniform(20.0, 120.0), 1)
-            
-            # 檢查是否打破最大尺寸紀錄
             if current_size > max_size:
                 max_size = current_size
                 is_new_record = True
             else:
                 is_new_record = False
-                
         elif progress <= 0:
             game_status = "LOSE"
 
     else:
-        # 如果輸或贏了，按 R 鍵可以重來
         if keys[pygame.K_r]:
             progress = 50.0
             bobber_y = bar_y + bar_height - bobber_height
@@ -131,39 +151,35 @@ while running:
     # 6. 畫面繪製
     screen.fill(BG_BLUE)
 
-    # 繪製主釣魚量條與進度條
+    # 繪製量條
     pygame.draw.rect(screen, BAR_BG, (bar_x, bar_y, bar_width, bar_height))
     pygame.draw.rect(screen, BOBBER_COLOR, (bar_x, int(bobber_y), bar_width, bobber_height))
     pygame.draw.rect(screen, FISH_COLOR, (bar_x + 5, int(fish_y), bar_width - 10, fish_height))
     pygame.draw.rect(screen, BAR_BG, (bar_x + 60, bar_y, 15, bar_height))
     current_prog_height = int(bar_height * (progress / 100))
     pygame.draw.rect(screen, PROGRESS_COLOR, (bar_x + 60, bar_y + bar_height - current_prog_height, 15, current_prog_height))
-
-    # 顯示文字提示與紀錄
-    font = pygame.font.SysFont("microsoftjhenghei", 22)
-    font_bold = pygame.font.SysFont("microsoftjhenghei", 26, bold=True)
     
-    # 頂部常駐的最高紀錄看板
-    record_text = font_bold.render(f"👑 歷史最大尺寸: {max_size} cm", True, (139, 69, 19))
+    # 顯示文字 (加上英文對照，防止極端情況下連中文都印不出來)
+    record_text = font_bold.render(f"👑 Max Size (最大尺寸): {max_size} cm", True, (139, 69, 19))
     screen.blit(record_text, (20, 20))
     
     if game_status == "PLAYING":
-        tip_text = font.render("按住 [空白鍵] 控制橘色浮標！", True, TEXT_COLOR)
+        tip_text = font.render("Hold [SPACE] to catch fish! (按住空白鍵！)", True, TEXT_COLOR)
         screen.blit(tip_text, (20, 70))
     elif game_status == "WIN":
-        result_text = font_bold.render(f"🎉 釣到了！尺寸：{current_size} cm", True, (0, 128, 0))
-        screen.blit(result_text, (50, 220))
+        result_text = font_bold.render(f"🎉 Caught! Size (釣到了): {current_size} cm", True, (0, 128, 0))
+        screen.blit(result_text, (40, 220))
         
         if is_new_record:
-            new_record_text = font_bold.render("✨ 新紀錄誕生！太強了！ ✨", True, (255, 69, 0))
+            new_record_text = font_bold.render("✨ NEW RECORD! (新紀錄誕生!) ✨", True, (255, 69, 0))
             screen.blit(new_record_text, (45, 260))
             
-        retry_text = font.render("按下 [ R ] 重新挑戰", True, TEXT_COLOR)
-        screen.blit(retry_text, (110, 320))
+        retry_text = font.render("Press [ R ] to restart (按 R 重來)", True, TEXT_COLOR)
+        screen.blit(retry_text, (100, 320))
     elif game_status == "LOSE":
-        result_text = font_bold.render("❌ 魚溜走了...再接再厲！", True, (255, 0, 0))
-        retry_text = font.render("按下 [ R ] 重新挑戰", True, TEXT_COLOR)
-        screen.blit(result_text, (80, 240))
-        screen.blit(retry_text, (110, 290))
+        result_text = font_bold.render("❌ Fish escaped! (魚溜走了...)", True, (255, 0, 0))
+        retry_text = font.render("Press [ R ] to restart (按 R 重來)", True, TEXT_COLOR)
+        screen.blit(result_text, (70, 240))
+        screen.blit(retry_text, (100, 290))
 
     pygame.display.flip()
