@@ -1,169 +1,38 @@
-Python
+arkdown
 
 
-import pygame
-import random
-import sys
+# 🎣 Pygame Fishing Game
 
-# Initialize Pygame
-pygame.init()
+A simple, addictive 2D fishing minigame built with Python and Pygame. Catch fish, beat your high score, and avoid text glitches with this clean, English-only version!
 
-# Screen Configuration
-SCREEN_WIDTH = 400
-SCREEN_HEIGHT = 600
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("Fishing Game")
+---
 
-# Colors
-WHITE = (255, 255, 255)
-BG_BLUE = (173, 216, 230)      
-BAR_BG = (100, 100, 100)        
-BOBBER_COLOR = (255, 165, 0)    # Orange
-FISH_COLOR = (50, 205, 50)      # Green
-PROGRESS_COLOR = (255, 215, 0)  # Gold
-TEXT_COLOR = (0, 0, 0)
+## 🎮 How to Play
 
-# Game Control
-clock = pygame.time.Clock()
-FPS = 60
+The gameplay is inspired by classic fishing mechanics (like Stardew Valley):
+1. **The Fish (Green)** moves up and down randomly.
+2. **The Bobber (Orange)** is controlled by you. 
+3. **Hold `SPACEBAR`** to make the bobber float up; release it to let gravity pull it down.
+4. Keep the green fish **inside** the orange bobber to fill the golden progress bar.
+5. If the bar reaches 100%, you catch the fish! If it hits 0%, the fish escapes.
 
-# Bar Layout
-bar_x = 180
-bar_y = 120  
-bar_width = 40
-bar_height = 380
+---
 
-# Bobber (Player)
-bobber_height = 80
-bobber_y = bar_y + bar_height - bobber_height
-bobber_speed = 0
-gravity = 0.4
-lift = -0.8
+## 👑 Features
 
-# Fish (AI)
-fish_height = 30
-fish_y = bar_y + (bar_height // 2)
-fish_target_y = fish_y
-fish_speed = 2
-timer = 0
+* **High Score System:** Automatically tracks and displays your `BEST` catch size (in cm).
+* **New Record Alert:** Highlights when you break your historical record.
+* **Bug-Free Fonts:** Uses standard system fonts to prevent any garbled text or weird characters.
 
-# Progress
-progress = 50.0  
+---
 
-# Record System
-max_size = 0.0      
-current_size = 0.0  
-is_new_record = False 
+## 🚀 Installation & Running
 
-# Font Settings (Using standard Arial to prevent garbled text)
-font = pygame.font.SysFont("arial", 20)
-font_bold = pygame.font.SysFont("arial", 24, bold=True)
+### Prerequisites
+Make sure you have Python installed on your computer. You will also need the `pygame` library.
 
-# Main Game Loop
-running = True
-game_status = "PLAYING" 
-
-while running:
-    clock.tick(FPS)
-    
-    # Event Handling
-    keys = pygame.key.get_pressed()
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-            pygame.quit()
-            sys.exit()
-
-    if game_status == "PLAYING":
-        # Bobber Physics (Hold SPACE to go up, release to fall)
-        if keys[pygame.K_SPACE]:
-            bobber_speed += lift
-        else:
-            bobber_speed += gravity
+### 1. Install Pygame
+Open your terminal or command prompt and run:
+```bash
+pip install pygame
             
-        bobber_speed = max(-8, min(8, bobber_speed))
-        bobber_y += bobber_speed
-        
-        # Boundary Collision
-        if bobber_y < bar_y:
-            bobber_y = bar_y
-            bobber_speed = 0
-        elif bobber_y > bar_y + bar_height - bobber_height:
-            bobber_y = bar_y + bar_height - bobber_height
-            bobber_speed = 0
-
-        # Fish AI Movement
-        timer -= 1
-        if timer <= 0:
-            fish_target_y = random.randint(bar_y, bar_y + bar_height - fish_height)
-            timer = random.randint(30, 90)
-            
-        if fish_y < fish_target_y:
-            fish_y += min(fish_speed, fish_target_y - fish_y)
-        elif fish_y > fish_target_y:
-            fish_y -= min(fish_speed, fish_y - fish_target_y)
-
-        # Checking if the fish is inside the bobber range
-        fish_center = fish_y + fish_height / 2
-        if bobber_y <= fish_center <= bobber_y + bobber_height:
-            progress += 0.4
-        else:
-            progress -= 0.3
-
-        progress = max(0, min(100, progress))
-
-        # Win / Lose Condition
-        if progress >= 100:
-            game_status = "WIN"
-            current_size = round(random.uniform(20.0, 120.0), 1)
-            if current_size > max_size:
-                max_size = current_size
-                is_new_record = True
-            else:
-                is_new_record = False
-        elif progress <= 0:
-            game_status = "LOSE"
-
-    else:
-        # Press R to Restart
-        if keys[pygame.K_r]:
-            progress = 50.0
-            bobber_y = bar_y + bar_height - bobber_height
-            fish_y = bar_y + (bar_height // 2)
-            game_status = "PLAYING"
-
-    # Drawing Elements
-    screen.fill(BG_BLUE)
-
-    # Draw Fishing Bar & Progress Bar
-    pygame.draw.rect(screen, BAR_BG, (bar_x, bar_y, bar_width, bar_height))
-    pygame.draw.rect(screen, BOBBER_COLOR, (bar_x, int(bobber_y), bar_width, bobber_height))
-    pygame.draw.rect(screen, FISH_COLOR, (bar_x + 5, int(fish_y), bar_width - 10, fish_height))
-    pygame.draw.rect(screen, BAR_BG, (bar_x + 60, bar_y, 15, bar_height))
-    current_prog_height = int(bar_height * (progress / 100))
-    pygame.draw.rect(screen, PROGRESS_COLOR, (bar_x + 60, bar_y + bar_height - current_prog_height, 15, current_prog_height))
-    
-    # Render Text Information
-    record_text = font_bold.render(f"BEST: {max_size} cm", True, (139, 69, 19))
-    screen.blit(record_text, (20, 20))
-    
-    if game_status == "PLAYING":
-        tip_text = font.render("Hold [SPACE] to catch the fish!", True, TEXT_COLOR)
-        screen.blit(tip_text, (20, 70))
-    elif game_status == "WIN":
-        result_text = font_bold.render(f"CAUGHT! Size: {current_size} cm", True, (0, 128, 0))
-        screen.blit(result_text, (50, 220))
-        
-        if is_new_record:
-            new_record_text = font_bold.render("NEW RECORD !!", True, (255, 69, 0))
-            screen.blit(new_record_text, (100, 260))
-            
-        retry_text = font.render("Press [ R ] to play again", True, TEXT_COLOR)
-        screen.blit(retry_text, (100, 320))
-    elif game_status == "LOSE":
-        result_text = font_bold.render("FISH ESCAPED...", True, (255, 0, 0))
-        retry_text = font.render("Press [ R ] to try again", True, TEXT_COLOR)
-        screen.blit(result_text, (90, 240))
-        screen.blit(retry_text, (100, 290))
-
-    pygame.display.flip()
