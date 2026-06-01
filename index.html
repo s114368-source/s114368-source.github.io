@@ -1,5 +1,3 @@
-
-
 import pygame
 import random
 import sys
@@ -54,7 +52,7 @@ max_size = 0.0
 current_size = 0.0  
 is_new_record = False 
 
-# Font Settings (Using standard Arial to prevent garbled text/亂碼)
+# Font Settings (Using standard Arial to prevent garbled text)
 font = pygame.font.SysFont("arial", 20)
 font_bold = pygame.font.SysFont("arial", 24, bold=True)
 
@@ -166,3 +164,4 @@ while running:
         screen.blit(retry_text, (100, 290))
 
     pygame.display.flip()
+
