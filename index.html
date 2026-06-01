@@ -1,71 +1,76 @@
+這套程式碼已經完全移除所有中文與中文字型依賴，採用純英文配上最通用的標準字型（Arial），徹底根絕亂碼問題。
+
+你可以直接點擊程式碼右上角的「複製（Copy）」按鈕，然後完整覆蓋你原本的檔案（例如 fishing.py）：
+
+Python
+
 
 import pygame
 import random
 import sys
 
-# 初始化 Pygame
+# Initialize Pygame
 pygame.init()
 
-# 遊戲畫面大小與色彩定義
+# Screen Configuration
 SCREEN_WIDTH = 400
 SCREEN_HEIGHT = 600
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("🎣 Fishing Game")
+pygame.display.set_caption("Fishing Game")
 
+# Colors
 WHITE = (255, 255, 255)
-BG_BLUE = (173, 216, 230)      # 水藍色背景
-BAR_BG = (100, 100, 100)        # 釣魚量條背景
-BOBBER_COLOR = (255, 165, 0)    # 浮標（橘色）
-FISH_COLOR = (50, 205, 50)      # 魚（綠色）
-PROGRESS_COLOR = (255, 215, 0)  # 進度條（金色）
+BG_BLUE = (173, 216, 230)      
+BAR_BG = (100, 100, 100)        
+BOBBER_COLOR = (255, 165, 0)    # Orange
+FISH_COLOR = (50, 205, 50)      # Green
+PROGRESS_COLOR = (255, 215, 0)  # Gold
 TEXT_COLOR = (0, 0, 0)
 
-# 遊戲控制變數
+# Game Control
 clock = pygame.time.Clock()
 FPS = 60
 
-# 量條與物體參數
+# Bar Layout
 bar_x = 180
 bar_y = 120  
 bar_width = 40
 bar_height = 380
 
-# 浮標（玩家控制）
+# Bobber (Player)
 bobber_height = 80
 bobber_y = bar_y + bar_height - bobber_height
 bobber_speed = 0
 gravity = 0.4
 lift = -0.8
 
-# 魚（電腦隨機移動）
+# Fish (AI)
 fish_height = 30
 fish_y = bar_y + (bar_height // 2)
 fish_target_y = fish_y
 fish_speed = 2
 timer = 0
 
-# 釣魚進度
+# Progress
 progress = 50.0  
 
-# 👑 紀錄系統變數
+# Record System
 max_size = 0.0      
 current_size = 0.0  
 is_new_record = False 
 
-# ================= 🛠️ 終極無亂碼字型設定 =================
-# 直接使用 Pygame 內建絕對不會出錯的系統預設字型（只支援英文與數字）
+# Font Settings (Using standard Arial to prevent garbled text/亂碼)
 font = pygame.font.SysFont("arial", 20)
 font_bold = pygame.font.SysFont("arial", 24, bold=True)
-# =======================================================
 
-# 遊戲主迴圈
+# Main Game Loop
 running = True
 game_status = "PLAYING" 
 
 while running:
     clock.tick(FPS)
     
-    # 1. 事件處理
+    # Event Handling
     keys = pygame.key.get_pressed()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -74,7 +79,7 @@ while running:
             sys.exit()
 
     if game_status == "PLAYING":
-        # 2. 物理運算
+        # Bobber Physics (Hold SPACE to go up, release to fall)
         if keys[pygame.K_SPACE]:
             bobber_speed += lift
         else:
@@ -83,6 +88,7 @@ while running:
         bobber_speed = max(-8, min(8, bobber_speed))
         bobber_y += bobber_speed
         
+        # Boundary Collision
         if bobber_y < bar_y:
             bobber_y = bar_y
             bobber_speed = 0
@@ -90,7 +96,7 @@ while running:
             bobber_y = bar_y + bar_height - bobber_height
             bobber_speed = 0
 
-        # 3. 魚的隨機 AI 移動
+        # Fish AI Movement
         timer -= 1
         if timer <= 0:
             fish_target_y = random.randint(bar_y, bar_y + bar_height - fish_height)
@@ -101,7 +107,7 @@ while running:
         elif fish_y > fish_target_y:
             fish_y -= min(fish_speed, fish_y - fish_target_y)
 
-        # 4. 判定魚是否在浮標範圍內
+        # Checking if the fish is inside the bobber range
         fish_center = fish_y + fish_height / 2
         if bobber_y <= fish_center <= bobber_y + bobber_height:
             progress += 0.4
@@ -110,7 +116,7 @@ while running:
 
         progress = max(0, min(100, progress))
 
-        # 5. 勝負判斷
+        # Win / Lose Condition
         if progress >= 100:
             game_status = "WIN"
             current_size = round(random.uniform(20.0, 120.0), 1)
@@ -123,16 +129,17 @@ while running:
             game_status = "LOSE"
 
     else:
+        # Press R to Restart
         if keys[pygame.K_r]:
             progress = 50.0
             bobber_y = bar_y + bar_height - bobber_height
             fish_y = bar_y + (bar_height // 2)
             game_status = "PLAYING"
 
-    # 6. 畫面繪製
+    # Drawing Elements
     screen.fill(BG_BLUE)
 
-    # 繪製量條
+    # Draw Fishing Bar & Progress Bar
     pygame.draw.rect(screen, BAR_BG, (bar_x, bar_y, bar_width, bar_height))
     pygame.draw.rect(screen, BOBBER_COLOR, (bar_x, int(bobber_y), bar_width, bobber_height))
     pygame.draw.rect(screen, FISH_COLOR, (bar_x + 5, int(fish_y), bar_width - 10, fish_height))
@@ -140,7 +147,7 @@ while running:
     current_prog_height = int(bar_height * (progress / 100))
     pygame.draw.rect(screen, PROGRESS_COLOR, (bar_x + 60, bar_y + bar_height - current_prog_height, 15, current_prog_height))
     
-    # --- 顯示純英文與數字（徹底根絕亂碼） ---
+    # Render Text Information
     record_text = font_bold.render(f"BEST: {max_size} cm", True, (139, 69, 19))
     screen.blit(record_text, (20, 20))
     
