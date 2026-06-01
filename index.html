@@ -1,38 +1,146 @@
-arkdown
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎣 HTML5 Fishing Game</title>
+    <style>
+        body {
+            background-color: #a8dadc;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+        }
 
+        #game-container {
+            background-color: #f1faee;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            text-align: center;
+        }
 
-# 🎣 Pygame Fishing Game
+        h2 {
+            margin: 0 0 10px 0;
+            color: #1d3557;
+        }
 
-A simple, addictive 2D fishing minigame built with Python and Pygame. Catch fish, beat your high score, and avoid text glitches with this clean, English-only version!
+        #score-board {
+            font-size: 24px;
+            font-weight: bold;
+            color: #e63946;
+            margin-bottom: 15px;
+        }
 
----
+        #game-stage {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
 
-## 🎮 How to Play
+        /* 釣魚主量條 */
+        #fishing-bar {
+            width: 50px;
+            height: 380px;
+            background-color: #457b9d;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
 
-The gameplay is inspired by classic fishing mechanics (like Stardew Valley):
-1. **The Fish (Green)** moves up and down randomly.
-2. **The Bobber (Orange)** is controlled by you. 
-3. **Hold `SPACEBAR`** to make the bobber float up; release it to let gravity pull it down.
-4. Keep the green fish **inside** the orange bobber to fill the golden progress bar.
-5. If the bar reaches 100%, you catch the fish! If it hits 0%, the fish escapes.
+        /* 橘色浮標 */
+        #bobber {
+            width: 100%;
+            height: 80px;
+            background-color: #f4a261;
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            transition: bottom 0.05s linear;
+            border-radius: 4px;
+        }
 
----
+        /* 綠色的魚 */
+        #fish {
+            width: 40px;
+            height: 30px;
+            background-color: #2a9d8f;
+            position: absolute;
+            left: 5px;
+            bottom: 150px;
+            transition: bottom 0.1s ease-in-out;
+            border-radius: 5px;
+        }
 
-## 👑 Features
+        /* 金色進度條外框 */
+        #progress-container {
+            width: 20px;
+            height: 380px;
+            background-color: #dbd3d3;
+            border-radius: 5px;
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+        }
 
-* **High Score System:** Automatically tracks and displays your `BEST` catch size (in cm).
-* **New Record Alert:** Highlights when you break your historical record.
-* **Bug-Free Fonts:** Uses standard system fonts to prevent any garbled text or weird characters.
+        /* 金色進度條本體 */
+        #progress-bar {
+            width: 100%;
+            height: 50%;
+            background-color: #e9c46a;
+            border-radius: 5px;
+            transition: height 0.05s linear;
+        }
 
----
+        #msg {
+            font-size: 18px;
+            height: 25px;
+            color: #1d3557;
+            margin-bottom: 15px;
+        }
 
-## 🚀 Installation & Running
+        /* 手機版按鈕，電腦版也可以用點擊的 */
+        #action-btn {
+            padding: 12px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            background-color: #e63946;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
 
-### Prerequisites
-Make sure you have Python installed on your computer. You will also need the `pygame` library.
+        #action-btn:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
 
-### 1. Install Pygame
-Open your terminal or command prompt and run:
-```bash
-pip install pygame
-            
+    <div id="game-container">
+        <h2>🎣 Mini Fishing Game</h2>
+        <div id="score-board">BEST: <span id="best-score">0</span> cm</div>
+        
+        <div id="game-stage">
+            <div id="fishing-bar">
+                <div id="bobber"></div>
+                <div id="fish"></div>
+            </div>
+            <div id="progress-container">
+                <div id="progress-bar"></div>
+            </div>
+        </div>
+
+        <div id="msg">Hold [SPACE] or PRESS BUTTON to fish!</div>
+        <button id="action-btn">HOLD TO LIFT</button>
+    </div>
