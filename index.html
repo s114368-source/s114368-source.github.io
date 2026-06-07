@@ -1,364 +1,390 @@
-HTML
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>圓滾滾貓咪大胃王：命名與搜集之旅 🐱🍰</title>
+    <title>貓咪自由生態缸 🐾</title>
     <style>
+        /* ================= 1. 網頁基礎與佈局樣式 ================= */
         body {
-            background-color: #f5f6fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
+            padding: 0;
+            background-color: #eef2f3;
+            font-family: 'Segoe UI', sans-serif;
             overflow: hidden;
-            position: relative;
             width: 100vw;
             height: 100vh;
-            cursor: crosshair;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            user-select: none;
         }
 
-        /* 取名字與歡迎 UI */
-        #ui-header {
-            text-align: center;
-            z-index: 100;
-            background-color: rgba(255, 255, 255, 0.95);
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            transition: opacity 0.5s, visibility 0.5s;
-            max-width: 400px;
-            width: 80%;
-        }
-
-        h1 {
-            color: #d2691e;
-            margin-top: 0;
-            font-size: 24px;
-        }
-
-        input[type="text"] {
-            width: 80%;
-            padding: 12px 20px;
-            margin: 15px 0;
-            box-sizing: border-box;
-            border: 2px solid #ff69b4;
-            border-radius: 25px;
-            font-size: 16px;
-            text-align: center;
-            outline: none;
-        }
-
-        #startBtn {
-            background-color: #ff69b4;
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            font-size: 18px;
-            border-radius: 35px;
-            cursor: pointer;
-            box-shadow: 0 5px 15px rgba(255, 105, 180, 0.4);
-            font-weight: bold;
-            transition: transform 0.2s;
-        }
-        #startBtn:hover { transform: scale(1.05); }
-
-        /* 頂部貓咪名字顯示 */
-        #status-display {
+        /* 上方控制面板 */
+        #control-panel {
             position: fixed;
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 22px;
-            color: #333;
+            display: flex;
+            gap: 15px;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 10px 20px;
+            border-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .btn {
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
             font-weight: bold;
-            z-index: 90;
-            background-color: rgba(255, 255, 255, 0.85);
-            padding: 8px 25px;
-            border-radius: 25px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            display: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-cat { background-color: #fca441; color: white; }
+        .btn-food { background-color: #4cd137; color: white; }
+        .btn-food.active { background-color: #e84118; box-shadow: 0 0 10px #e84118; }
+        .btn:hover { transform: scale(1.05); }
+
+        /* 遊戲舞台 */
+        #game-stage {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
         }
 
-        /* ================= 圓滾滾貓咪外觀優化 (完美三角形耳+腮紅) ================= */
+        /* 放罐頭模式開啟時，改變滑鼠游標為罐頭圖案 */
+        #game-stage.food-mode-active {
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" style="font-size:16px"><text y="16">🥫</text></svg>'), auto;
+        }
+
+        /* 罐頭落下的動畫效果 */
+        .can-item {
+            position: absolute;
+            font-size: 30px;
+            transform: translate(-50%, -50%);
+            z-index: 5;
+            animation: dropIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes dropIn {
+            0% { transform: translate(-50%, -100px) scale(0.5); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        /* ================= 2. 貓咪主體外觀結構 ================= */
         .cat-wrapper {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            /* 初始尺寸更小：縮放到 0.06，大約 12px 大小 */
-            transform: translate(-50%, -50%) scale(0.06); 
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.25);
-            z-index: 1;
-            width: 200px;
-            height: 200px;
-            pointer-events: none;
-            display: none;
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            transform: translate(-50%, -50%);
+            transition: left 0.1s linear, top 0.1s linear; /* 平滑移動核心 */
+            z-index: 10;
         }
 
+        /* 控制貓咪面向左邊或右邊 */
+        .cat-wrapper.face-left { transform: translate(-50%, -50%) scaleX(1); }
+        .cat-wrapper.face-right { transform: translate(-50%, -50%) scaleX(-1); }
+
+        /* 圓滾滾身體 */
         .cat-body {
-            width: 200px;
-            height: 180px;
-            border-radius: 50% 50% 46% 46%; /* 圓滾滾的下盤 */
+            width: 80px;
+            height: 70px;
+            border-radius: 50% 50% 46% 46%;
             position: absolute;
             bottom: 0;
             box-shadow: inset -12px -12px 0px rgba(0,0,0,0.05);
         }
 
-        /* 完美三角形貓耳 */
+        /* 俐落三角形貓耳 */
         .ear {
-            width: 50px;
-            height: 60px;
+            width: 22px;
+            height: 25px;
             position: absolute;
-            top: -20px;
-            /* 使用 clip-path 剪裁出完美的三角形 */
+            top: -8px;
             clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
         }
-        .ear.left { left: 20px; transform: rotate(-10deg); }
-        .ear.right { right: 20px; transform: rotate(10deg); }
+        .ear.left { left: 10px; transform: rotate(-5deg); }
+        .ear.right { right: 10px; transform: rotate(5deg); }
 
         .eye {
-            width: 22px;
-            height: 22px;
+            width: 10px;
+            height: 10px;
             background-color: #2c3e50;
             border-radius: 50%;
             position: absolute;
-            top: 60px;
+            top: 24px;
         }
-        .eye.left { left: 48px; }
-        .eye.right { right: 48px; }
-        .eye::after {
-            content: '';
-            width: 7px;
-            height: 7px;
-            background-color: #fff;
-            border-radius: 50%;
-            position: absolute;
-            top: 3px;
-            left: 4px;
-        }
+        .eye.left { left: 22px; }
+        .eye.right { right: 22px; }
 
-        /* 可愛粉紅腮紅 */
+        /* 粉嫩小腮紅 */
         .blush {
-            width: 24px;
-            height: 12px;
-            background-color: #ffb6c1; /* 柔和粉紅 */
+            width: 10px;
+            height: 5px;
+            background-color: #ffb6c1;
             border-radius: 50%;
             position: absolute;
-            top: 82px;
-            opacity: 0.7;
+            top: 34px;
         }
-        .blush.left { left: 32px; }
-        .blush.right { right: 32px; }
+        .blush.left { left: 14px; }
+        .blush.right { right: 14px; }
 
-        .mouth {
-            width: 16px;
-            height: 8px;
-            border: 3px solid #2c3e50;
-            border-top: none;
-            border-radius: 0 0 10px 10px;
-            position: absolute;
-            top: 78px;
-            left: 92px;
+        /* ================= 3. 五種動作狀態動畫狀態機 ================= */
+        /* [走路] 身體上下輕微跳動、歪頭 */
+        .cat-wrapper.action-walk .cat-body { animation: walkAnim 0.4s infinite alternate; }
+        @keyframes walkAnim {
+            0% { bottom: 0; }
+            100% { bottom: 5px; transform: rotate(3deg); }
         }
 
-        /* ================= 貓咪品種顏色定義 = "黑、三花、白" ================= */
-        /* 1. 黑貓 */
+        /* [睡覺] 眼睛變瞇，身體慢速縮放模擬呼吸 */
+        .cat-wrapper.action-sleep .cat-body { animation: sleepAnim 2s infinite ease-in-out; }
+        .cat-wrapper.action-sleep .eye { height: 2px; top: 28px; background-color: #7f8c8d; }
+        @keyframes sleepAnim {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03, 0.97); }
+        }
+
+        /* [伸懶腰] 身體拉長下壓 */
+        .cat-wrapper.action-stretch .cat-body { animation: stretchAnim 1.5s infinite alternate ease-in-out; }
+        @keyframes stretchAnim {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.3, 0.7) skewX(10deg); }
+        }
+
+        /* [後空翻] 整隻貓垂直彈跳並旋轉 360 度 */
+        .cat-wrapper.action-flip { animation: flipAnim 0.8s ease-in-out forwards; }
+        @keyframes flipAnim {
+            0% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+            50% { transform: translate(-50%, -120px) scale(1.1) rotate(180deg); }
+            100% { transform: translate(-50%, -50%) scale(1) rotate(360deg); }
+        }
+
+        /* [舔毛] 身體快速左右小幅度扭動 */
+        .cat-wrapper.action-lick .cat-body { animation: lickAnim 0.2s infinite alternate; }
+        @keyframes lickAnim {
+            0% { transform: rotate(-5deg); }
+            100% { transform: rotate(5deg); }
+        }
+
+        /* ================= 4. 貓咪隨機顏色花色 ================= */
+        /* 黑貓 */
         .cat-black .cat-body, .cat-black .ear { background-color: #2f3640; }
-        .cat-black .eye { background-color: #f1c40f; } /* 經典金黃眼 */
-        .cat-black .mouth { border-color: #f1c40f; }
+        .cat-black .eye { background-color: #f1c40f; }
 
-        /* 2. 白貓 */
-        .cat-white .cat-body, .cat-white .ear { background-color: #ffffff; }
-        .cat-white .cat-body { box-shadow: inset -12px -12px 0px rgba(0,0,0,0.03), 0 0 8px rgba(0,0,0,0.06); }
+        /* 白貓 */
+        .cat-white .cat-body, .cat-white .ear { background-color: #ffffff; border: 1px solid #dcdde1; }
 
-        /* 3. 三花貓 */
+        /* 三花貓 (純 CSS 斑點技術) */
         .cat-calico .cat-body {
             background-color: #ffffff;
             background-image: 
-                radial-gradient(circle at 25px 35px, #e1b12c 45px, transparent 46px), /* 橘斑 */
-                radial-gradient(circle at 160px 45px, #2f3640 55px, transparent 56px), /* 黑斑 */
-                radial-gradient(circle at 90px 145px, #e1b12c 35px, transparent 36px);
+                radial-gradient(circle at 15px 15px, #e1b12c 20px, transparent 21px), 
+                radial-gradient(circle at 60px 20px, #2f3640 25px, transparent 26px);
         }
         .cat-calico .ear.left { background-color: #2f3640; }
         .cat-calico .ear.right { background-color: #e1b12c; }
-
-        /* 蛋糕飛行特效 */
-        .cake-projectile {
-            position: absolute;
-            font-size: 28px;
-            z-index: 50;
-            transition: transform 0.4s ease-in, opacity 0.4s;
-            pointer-events: none;
-        }
     </style>
 </head>
-<body id="game-zone">
+<body>
 
-    <div id="ui-header">
-        <h1>🐱 認養一隻圓滾滾小貓 🍰</h1>
-        <p>幫你的小貓取個可愛的名字吧：</p>
-        <input type="text" id="catNameInput" placeholder="例如：棉花糖、小黑、大福" max="10">
-        <br>
-        <button id="startBtn" onclick="startGame()">抱回家餵食！</button>
+    <div id="control-panel">
+        <button class="btn btn-cat" onclick="spawnCat()">🐱 召喚一隻貓</button>
+        <button class="btn btn-food" id="foodBtn" onclick="toggleFoodMode()">罐頭模式 (關閉) 🥫</button>
     </div>
 
-    <div id="status-display"></div>
-
-    <div class="cat-wrapper" id="cat">
-        <div class="ear left"></div>
-        <div class="ear right"></div>
-        <div class="cat-body">
-            <div class="eye left"></div>
-            <div class="eye right"></div>
-            <div class="blush left"></div>
-            <div class="blush right"></div>
-            <div class="mouth"></div>
-        </div>
-    </div>
+    <div id="game-stage"></div>
 
     <script>
-        let gameActive = false;
-        let catScale = 0.06;    // 初始大小（極小，約 12px）
-        const maxScale = 12.0;  // 放大到 12 倍，確保完全突破並填滿整個螢幕
-        let currentCatName = '';
-        const defaultNames = ['小肥肥', '大福', '糰子', '年糕', '小咪', '泡芙'];
-        const catColors = ['black', 'calico', 'white'];
-        
-        const uiHeader = document.getElementById('ui-header');
-        const statusDisplay = document.getElementById('status-display');
-        const catElement = document.getElementById('cat');
-        const gameZone = document.getElementById('game-zone');
-        const nameInput = document.getElementById('catNameInput');
+        const stage = document.getElementById('game-stage');
+        const foodBtn = document.getElementById('foodBtn');
+        const cats = [];  // 所有生存的貓咪實例
+        const foods = []; // 場上的罐頭座標清單
 
-        function startGame() {
-            // 獲取名字，若空則隨機選一個
-            currentCatName = nameInput.value.trim();
-            if (currentCatName === '') {
-                currentCatName = defaultNames[Math.floor(Math.random() * defaultNames.length)];
+        let foodMode = false;
+        const catColors = ['black', 'white', 'calico'];
+        const actions = ['walk', 'sleep', 'stretch', 'flip', 'lick'];
+
+        // 切換放罐頭狀態
+        function toggleFoodMode() {
+            foodMode = !foodMode;
+            if (foodMode) {
+                foodBtn.classList.add('active');
+                foodBtn.innerText = '放罐頭模式 (開啟) 🥫';
+                stage.classList.add('food-mode-active');
+            } else {
+                foodBtn.classList.remove('active');
+                foodBtn.innerText = '罐頭模式 (關閉) 🥫';
+                stage.classList.remove('food-mode-active');
             }
-
-            gameActive = true;
-            uiHeader.style.opacity = '0';
-            uiHeader.style.visibility = 'hidden'; // 隱藏輸入介面
-            
-            statusDisplay.style.display = 'block';
-            catElement.style.display = 'block';
-            
-            generateNewCat(true); // 生成第一隻貓
-            
-            // 綁定滑鼠投餵點擊事件
-            gameZone.addEventListener('click', throwCake);
         }
 
-        function generateNewCat(isFirstTime = false) {
-            catScale = 0.06; // 回歸極小尺寸
-            catElement.style.transform = `translate(-50%, -50%) scale(${catScale})`;
+        // 監聽舞台點擊事件，用來放下罐頭
+        stage.addEventListener('click', (e) => {
+            // 點擊按鈕時不觸發放罐頭邏輯
+            if (!foodMode || e.target.classList.contains('btn')) return;
+
+            const foodX = e.clientX;
+            const foodY = e.clientY;
+
+            // 建立罐頭元素並渲染
+            const foodEl = document.createElement('div');
+            foodEl.classList.add('can-item');
+            foodEl.innerText = '🥫';
+            foodEl.style.left = foodX + 'px';
+            foodEl.style.top = foodY + 'px';
+            stage.appendChild(foodEl);
+
+            // 把罐頭資訊推入陣列，供貓咪們感知
+            foods.push({ x: foodX, y: foodY, element: foodEl });
+        });
+
+        // 召喚新貓咪的對外按鈕接口
+        function spawnCat() {
+            const x = Math.random() * (window.innerWidth - 100) + 50;
+            const y = Math.random() * (window.innerHeight - 150) + 100;
+            const color = catColors[Math.floor(Math.random() * catColors.length)];
             
-            // 隨機黑、三花、白
-            const randomColor = catColors[Math.floor(Math.random() * catColors.length)];
-            catElement.classList.remove('cat-black', 'cat-calico', 'cat-white');
-            catElement.classList.add(`cat-${randomColor}`);
-            
-            // 如果不是第一隻，代表上一隻填滿消失了，隨機再換個名字
-            if (!isFirstTime) {
-                currentCatName = defaultNames[Math.floor(Math.random() * defaultNames.length)];
-            }
-            
-            statusDisplay.innerText = `🐾 ${currentCatName}`;
-            catElement.style.display = 'block';
+            cats.push(new Cat(x, y, color));
         }
 
-        // 滑鼠投餵
-        function throwCake(e) {
-            if (!gameActive || catScale >= maxScale) return;
-
-            const clickX = e.clientX;
-            const clickY = e.clientY;
-
-            const cake = document.createElement('div');
-            cake.classList.add('cake-projectile');
-            cake.innerText = '🍰';
-            cake.style.left = clickX + 'px';
-            cake.style.top = clickY + 'px';
-            document.body.appendChild(cake);
-
-            const catRect = catElement.getBoundingClientRect();
-            const catCenterX = catRect.left + catRect.width / 2;
-            const catCenterY = catRect.top + catRect.height / 2;
-
-            const deltaX = catCenterX - clickX;
-            const deltaY = catCenterY - clickY;
-
-            requestAnimationFrame(() => {
-                cake.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.3)`;
-                cake.style.opacity = '0';
-            });
-
-            setTimeout(() => {
-                cake.remove();
-                if (gameActive) feedCat();
-            }, 400);
-        }
-
-        function feedCat() {
-            // 每次吃蛋糕放大，前期放大慢，後期有吹氣感
-            catScale += 0.35;
-            catElement.style.transform = `translate(-50%, -50%) scale(${catScale})`;
-
-            // 播放「咪咪咪」的電子音效
-            playMeowSound();
-
-            // 判定是否徹底填滿螢幕並超出
-            if (catScale >= maxScale) {
-                gameActive = false;
-                statusDisplay.innerText = `🎉 ${currentCatName} 功德圓滿，統治宇宙了！`;
+        // 貓咪獨立行為個體物件 (物件導向)
+        class Cat {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.currentAction = 'sleep';
+                this.targetX = x;
+                this.targetY = y;
+                this.speed = 1.8 + Math.random() * 2; // 每隻貓的速度都有點隨機差異
                 
-                // 貓咪逐漸淡出消失
+                this.createDOM();
+                this.startBrain();
+            }
+
+            // 建立貓咪的 HTML 節點
+            createDOM() {
+                this.element = document.createElement('div');
+                this.element.classList.add('cat-wrapper', `cat-${this.color}`);
+                this.element.innerHTML = `
+                    <div class="ear left"></div>
+                    <div class="ear right"></div>
+                    <div class="cat-body">
+                        <div class="eye left"></div>
+                        <div class="eye right"></div>
+                        <div class="blush left"></div>
+                        <div class="blush right"></div>
+                    </div>
+                `;
+                this.updatePosition();
+                stage.appendChild(this.element);
+            }
+
+            updatePosition() {
+                this.element.style.left = this.x + 'px';
+                this.element.style.top = this.y + 'px';
+            }
+
+            // 貓咪內建計時大腦
+            startBrain() {
+                // 每 100 毫秒執行一次尋路移動與 AI 思考判定
+                setInterval(() => {
+                    this.think();
+                    this.move();
+                }, 100);
+
+                // 自主行為計時器：每 3 到 6 秒隨機轉換休閒動作
+                const changeActionLoop = () => {
+                    // 只有在地上沒有任何食物時，貓咪才會無所事事地做隨機動作
+                    if (foods.length === 0) {
+                        const randomAction = actions[Math.floor(Math.random() * actions.length)];
+                        this.setAction(randomAction);
+
+                        // 如果隨機到走路，就在螢幕內給牠一個隨機的散步目標
+                        if (randomAction === 'walk') {
+                            this.targetX = Math.random() * (window.innerWidth - 100) + 50;
+                            this.targetY = Math.random() * (window.innerHeight - 150) + 100;
+                        }
+                    }
+                    setTimeout(changeActionLoop, 3000 + Math.random() * 3000);
+                };
+                setTimeout(changeActionLoop, 1000);
+            }
+
+            setAction(action) {
+                // 清除之前的舊動作 Class
+                actions.forEach(a => this.element.classList.remove(`action-${a}`));
+                this.currentAction = action;
+                this.element.classList.add(`action-${action}`);
+            }
+
+            // AI 思考：附近有沒有罐頭
+            think() {
+                if (foods.length > 0) {
+                    // 全場貓咪鎖定場上的第一個罐頭
+                    const targetFood = foods[0];
+                    this.targetX = targetFood.x;
+                    this.targetY = targetFood.y;
+                    
+                    // 如果這隻貓此時不是走路狀態，強制轉換成走路跑過去
+                    if (this.currentAction !== 'walk') {
+                        this.setAction('walk');
+                    }
+
+                    // 檢查貓咪跟罐頭的距離是否小於 15px (代表吃到了)
+                    const dist = Math.hypot(this.targetX - this.x, this.targetY - this.y);
+                    if (dist < 15) {
+                        this.eatFood(targetFood);
+                    }
+                }
+            }
+
+            // 物理坐標移動
+            move() {
+                if (this.currentAction !== 'walk') return;
+
+                const deltaX = this.targetX - this.x;
+                const deltaY = this.targetY - this.y;
+                const dist = Math.hypot(deltaX, deltaY);
+
+                // 如果還沒走到目標點，就繼續向量前進
+                if (dist > 5) {
+                    // 根據移動方向，控制臉朝左還是朝右
+                    if (deltaX > 0) {
+                        this.element.classList.remove('face-left');
+                        this.element.classList.add('face-right');
+                    } else {
+                        this.element.classList.remove('face-right');
+                        this.element.classList.add('face-left');
+                    }
+
+                    this.x += (deltaX / dist) * this.speed;
+                    this.y += (deltaY / dist) * this.speed;
+                    this.updatePosition();
+                } else {
+                    // 漫無目的地散步到終點後，原地舔毛休息
+                    if (foods.length === 0) {
+                        this.setAction('lick');
+                    }
+                }
+            }
+
+            // 吃到罐頭的處理機制
+            eatFood(food) {
+                const index = foods.indexOf(food);
+                if (index > -1) {
+                    foods.splice(index, 1);
+                    food.element.remove(); // 從舞台上拔掉被吃掉的罐頭
+                }
+                
+                // 吃飽太開心了！原地觸發「後空翻」
+                this.setAction('flip');
+                
+                // 後空翻結束後，滿足地原地躺下睡覺
                 setTimeout(() => {
-                    catElement.style.display = 'none';
-                    // 隨後生成下一隻新顏色的貓
-                    setTimeout(() => {
-                        gameActive = true;
-                        generateNewCat(false);
-                    }, 600);
-                }, 1200);
-            }
-        }
-
-        // ================= 聲音產生器 (不需要任何音效檔案，純程式碼發聲) ================= */
-        function playMeowSound() {
-            try {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                if (!AudioContext) return;
-                const ctx = new AudioContext();
-                
-                // 建立波形發生器
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                
-                osc.type = 'triangle'; // 三角波，聲音聽起來比較軟萌溫和
-                
-                // 模擬「咪～」的高頻撒嬌聲 (頻率快速從高往低滑動)
-                const now = ctx.currentTime;
-                const startFreq = 850 + Math.random() * 150; // 隨機音高
-                osc.frequency.setValueAtTime(startFreq, now);
-                osc.frequency.exponentialRampToValueAtTime(startFreq * 0.7, now + 0.15);
-                
-                // 音量控制（淡入淡出，避免爆音）
-                gain.gain.setValueAtTime(0, now);
-                gain.gain.linearRampToValueAtTime(0.15, now + 0.03); // 音量
-                gain.gain.linearRampToValueAtTime(0, now + 0.18);
-                
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                
-                osc.start(now);
-                osc.stop(now + 0.18);
-            } catch (e) {
-                console.log("音效播放受瀏覽器安全限制，需點擊畫面的任意地方觸發。");
+                    this.setAction('sleep');
+                }, 800);
             }
         }
     </script>
