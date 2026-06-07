@@ -1,3 +1,4 @@
+HTML
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -91,4 +92,275 @@
             transform: translate(-50%, -50%) scale(0.06); 
             transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.25);
             z-index: 1;
-            width: 200px
+            width: 200px;
+            height: 200px;
+            pointer-events: none;
+            display: none;
+        }
+
+        .cat-body {
+            width: 200px;
+            height: 180px;
+            border-radius: 50% 50% 46% 46%; /* 圓滾滾的下盤 */
+            position: absolute;
+            bottom: 0;
+            box-shadow: inset -12px -12px 0px rgba(0,0,0,0.05);
+        }
+
+        /* 完美三角形貓耳 */
+        .ear {
+            width: 50px;
+            height: 60px;
+            position: absolute;
+            top: -20px;
+            /* 使用 clip-path 剪裁出完美的三角形 */
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+        }
+        .ear.left { left: 20px; transform: rotate(-10deg); }
+        .ear.right { right: 20px; transform: rotate(10deg); }
+
+        .eye {
+            width: 22px;
+            height: 22px;
+            background-color: #2c3e50;
+            border-radius: 50%;
+            position: absolute;
+            top: 60px;
+        }
+        .eye.left { left: 48px; }
+        .eye.right { right: 48px; }
+        .eye::after {
+            content: '';
+            width: 7px;
+            height: 7px;
+            background-color: #fff;
+            border-radius: 50%;
+            position: absolute;
+            top: 3px;
+            left: 4px;
+        }
+
+        /* 可愛粉紅腮紅 */
+        .blush {
+            width: 24px;
+            height: 12px;
+            background-color: #ffb6c1; /* 柔和粉紅 */
+            border-radius: 50%;
+            position: absolute;
+            top: 82px;
+            opacity: 0.7;
+        }
+        .blush.left { left: 32px; }
+        .blush.right { right: 32px; }
+
+        .mouth {
+            width: 16px;
+            height: 8px;
+            border: 3px solid #2c3e50;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            position: absolute;
+            top: 78px;
+            left: 92px;
+        }
+
+        /* ================= 貓咪品種顏色定義 = "黑、三花、白" ================= */
+        /* 1. 黑貓 */
+        .cat-black .cat-body, .cat-black .ear { background-color: #2f3640; }
+        .cat-black .eye { background-color: #f1c40f; } /* 經典金黃眼 */
+        .cat-black .mouth { border-color: #f1c40f; }
+
+        /* 2. 白貓 */
+        .cat-white .cat-body, .cat-white .ear { background-color: #ffffff; }
+        .cat-white .cat-body { box-shadow: inset -12px -12px 0px rgba(0,0,0,0.03), 0 0 8px rgba(0,0,0,0.06); }
+
+        /* 3. 三花貓 */
+        .cat-calico .cat-body {
+            background-color: #ffffff;
+            background-image: 
+                radial-gradient(circle at 25px 35px, #e1b12c 45px, transparent 46px), /* 橘斑 */
+                radial-gradient(circle at 160px 45px, #2f3640 55px, transparent 56px), /* 黑斑 */
+                radial-gradient(circle at 90px 145px, #e1b12c 35px, transparent 36px);
+        }
+        .cat-calico .ear.left { background-color: #2f3640; }
+        .cat-calico .ear.right { background-color: #e1b12c; }
+
+        /* 蛋糕飛行特效 */
+        .cake-projectile {
+            position: absolute;
+            font-size: 28px;
+            z-index: 50;
+            transition: transform 0.4s ease-in, opacity 0.4s;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body id="game-zone">
+
+    <div id="ui-header">
+        <h1>🐱 認養一隻圓滾滾小貓 🍰</h1>
+        <p>幫你的小貓取個可愛的名字吧：</p>
+        <input type="text" id="catNameInput" placeholder="例如：棉花糖、小黑、大福" max="10">
+        <br>
+        <button id="startBtn" onclick="startGame()">抱回家餵食！</button>
+    </div>
+
+    <div id="status-display"></div>
+
+    <div class="cat-wrapper" id="cat">
+        <div class="ear left"></div>
+        <div class="ear right"></div>
+        <div class="cat-body">
+            <div class="eye left"></div>
+            <div class="eye right"></div>
+            <div class="blush left"></div>
+            <div class="blush right"></div>
+            <div class="mouth"></div>
+        </div>
+    </div>
+
+    <script>
+        let gameActive = false;
+        let catScale = 0.06;    // 初始大小（極小，約 12px）
+        const maxScale = 12.0;  // 放大到 12 倍，確保完全突破並填滿整個螢幕
+        let currentCatName = '';
+        const defaultNames = ['小肥肥', '大福', '糰子', '年糕', '小咪', '泡芙'];
+        const catColors = ['black', 'calico', 'white'];
+        
+        const uiHeader = document.getElementById('ui-header');
+        const statusDisplay = document.getElementById('status-display');
+        const catElement = document.getElementById('cat');
+        const gameZone = document.getElementById('game-zone');
+        const nameInput = document.getElementById('catNameInput');
+
+        function startGame() {
+            // 獲取名字，若空則隨機選一個
+            currentCatName = nameInput.value.trim();
+            if (currentCatName === '') {
+                currentCatName = defaultNames[Math.floor(Math.random() * defaultNames.length)];
+            }
+
+            gameActive = true;
+            uiHeader.style.opacity = '0';
+            uiHeader.style.visibility = 'hidden'; // 隱藏輸入介面
+            
+            statusDisplay.style.display = 'block';
+            catElement.style.display = 'block';
+            
+            generateNewCat(true); // 生成第一隻貓
+            
+            // 綁定滑鼠投餵點擊事件
+            gameZone.addEventListener('click', throwCake);
+        }
+
+        function generateNewCat(isFirstTime = false) {
+            catScale = 0.06; // 回歸極小尺寸
+            catElement.style.transform = `translate(-50%, -50%) scale(${catScale})`;
+            
+            // 隨機黑、三花、白
+            const randomColor = catColors[Math.floor(Math.random() * catColors.length)];
+            catElement.classList.remove('cat-black', 'cat-calico', 'cat-white');
+            catElement.classList.add(`cat-${randomColor}`);
+            
+            // 如果不是第一隻，代表上一隻填滿消失了，隨機再換個名字
+            if (!isFirstTime) {
+                currentCatName = defaultNames[Math.floor(Math.random() * defaultNames.length)];
+            }
+            
+            statusDisplay.innerText = `🐾 ${currentCatName}`;
+            catElement.style.display = 'block';
+        }
+
+        // 滑鼠投餵
+        function throwCake(e) {
+            if (!gameActive || catScale >= maxScale) return;
+
+            const clickX = e.clientX;
+            const clickY = e.clientY;
+
+            const cake = document.createElement('div');
+            cake.classList.add('cake-projectile');
+            cake.innerText = '🍰';
+            cake.style.left = clickX + 'px';
+            cake.style.top = clickY + 'px';
+            document.body.appendChild(cake);
+
+            const catRect = catElement.getBoundingClientRect();
+            const catCenterX = catRect.left + catRect.width / 2;
+            const catCenterY = catRect.top + catRect.height / 2;
+
+            const deltaX = catCenterX - clickX;
+            const deltaY = catCenterY - clickY;
+
+            requestAnimationFrame(() => {
+                cake.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.3)`;
+                cake.style.opacity = '0';
+            });
+
+            setTimeout(() => {
+                cake.remove();
+                if (gameActive) feedCat();
+            }, 400);
+        }
+
+        function feedCat() {
+            // 每次吃蛋糕放大，前期放大慢，後期有吹氣感
+            catScale += 0.35;
+            catElement.style.transform = `translate(-50%, -50%) scale(${catScale})`;
+
+            // 播放「咪咪咪」的電子音效
+            playMeowSound();
+
+            // 判定是否徹底填滿螢幕並超出
+            if (catScale >= maxScale) {
+                gameActive = false;
+                statusDisplay.innerText = `🎉 ${currentCatName} 功德圓滿，統治宇宙了！`;
+                
+                // 貓咪逐漸淡出消失
+                setTimeout(() => {
+                    catElement.style.display = 'none';
+                    // 隨後生成下一隻新顏色的貓
+                    setTimeout(() => {
+                        gameActive = true;
+                        generateNewCat(false);
+                    }, 600);
+                }, 1200);
+            }
+        }
+
+        // ================= 聲音產生器 (不需要任何音效檔案，純程式碼發聲) ================= */
+        function playMeowSound() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const ctx = new AudioContext();
+                
+                // 建立波形發生器
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                
+                osc.type = 'triangle'; // 三角波，聲音聽起來比較軟萌溫和
+                
+                // 模擬「咪～」的高頻撒嬌聲 (頻率快速從高往低滑動)
+                const now = ctx.currentTime;
+                const startFreq = 850 + Math.random() * 150; // 隨機音高
+                osc.frequency.setValueAtTime(startFreq, now);
+                osc.frequency.exponentialRampToValueAtTime(startFreq * 0.7, now + 0.15);
+                
+                // 音量控制（淡入淡出，避免爆音）
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(0.15, now + 0.03); // 音量
+                gain.gain.linearRampToValueAtTime(0, now + 0.18);
+                
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                osc.start(now);
+                osc.stop(now + 0.18);
+            } catch (e) {
+                console.log("音效播放受瀏覽器安全限制，需點擊畫面的任意地方觸發。");
+            }
+        }
+    </script>
+</body>
+</html>
