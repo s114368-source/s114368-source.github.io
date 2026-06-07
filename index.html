@@ -1,300 +1,94 @@
-HTML
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>圓滾滾貓咪大胃王：搜集之旅 🐱🍰</title>
+    <title>圓滾滾貓咪大胃王：命名與搜集之旅 🐱🍰</title>
     <style>
         body {
-            background-color: #f0f0f0; /* 淡灰色背景，突出不同顏色的貓 */
+            background-color: #f5f6fa;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             overflow: hidden;
             position: relative;
             width: 100vw;
             height: 100vh;
-            cursor: crosshair; /* 改变滑鼠形状，暗示可以点击 */
+            cursor: crosshair;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
         }
 
-        /* 標題區域，開始遊戲後會隱藏 */
+        /* 取名字與歡迎 UI */
         #ui-header {
             text-align: center;
-            margin-top: 50px;
             z-index: 100;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             transition: opacity 0.5s, visibility 0.5s;
+            max-width: 400px;
+            width: 80%;
         }
 
         h1 {
             color: #d2691e;
-            background-color: rgba(255, 255, 255, 0.9);
-            padding: 10px 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-top: 0;
+            font-size: 24px;
+        }
+
+        input[type="text"] {
+            width: 80%;
+            padding: 12px 20px;
+            margin: 15px 0;
+            box-sizing: border-box;
+            border: 2px solid #ff69b4;
+            border-radius: 25px;
+            font-size: 16px;
+            text-align: center;
+            outline: none;
         }
 
         #startBtn {
             background-color: #ff69b4;
             color: white;
             border: none;
-            padding: 15px 30px;
-            font-size: 20px;
-            border-radius: 30px;
+            padding: 12px 30px;
+            font-size: 18px;
+            border-radius: 35px;
             cursor: pointer;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 5px 15px rgba(255, 105, 180, 0.4);
             font-weight: bold;
+            transition: transform 0.2s;
         }
+        #startBtn:hover { transform: scale(1.05); }
 
-        /* 遊戲進行中的狀態文字（如：黑貓、吃了多少） */
+        /* 頂部貓咪名字顯示 */
         #status-display {
             position: fixed;
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 18px;
+            font-size: 22px;
             color: #333;
             font-weight: bold;
             z-index: 90;
-            background-color: rgba(255, 255, 255, 0.7);
-            padding: 5px 15px;
-            border-radius: 20px;
-            display: none; /* 初始隱藏 */
+            background-color: rgba(255, 255, 255, 0.85);
+            padding: 8px 25px;
+            border-radius: 25px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            display: none;
         }
 
-        /* ================= 圓滾滾貓咪的 CSS 結構 (通用) ================= */
+        /* ================= 圓滾滾貓咪外觀優化 (完美三角形耳+腮紅) ================= */
         .cat-wrapper {
             position: fixed;
             top: 50%;
             left: 50%;
-            /* 初始尺寸極小，約 20px (1rem) */
-            transform: translate(-50%, -50%) scale(0.1); 
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.2) ;
+            /* 初始尺寸更小：縮放到 0.06，大約 12px 大小 */
+            transform: translate(-50%, -50%) scale(0.06); 
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.25);
             z-index: 1;
-            width: 200px;
-            height: 200px;
-            pointer-events: none; /* 滑鼠点击会穿透貓咪 */
-            display: none; /* 初始隱藏 */
-        }
-
-        .cat-body {
-            width: 200px;
-            height: 180px;
-            border-radius: 50% 50% 45% 45%;
-            position: absolute;
-            bottom: 0;
-            box-shadow: inset -10px -10px 0px rgba(0,0,0,0.05);
-        }
-
-        .ear {
-            width: 45px;
-            height: 45px;
-            position: absolute;
-            top: -10px;
-            border-radius: 30% 70% 30% 70% / 30% 30% 70% 70%;
-        }
-        .ear.left { left: 25px; transform: rotate(-15deg); }
-        .ear.right { right: 25px; transform: rotate(60deg); }
-
-        .eye {
-            width: 22px;
-            height: 22px;
-            background-color: #2c3e50;
-            border-radius: 50%;
-            position: absolute;
-            top: 55px;
-        }
-        .eye.left { left: 50px; }
-        .eye.right { right: 50px; }
-        .eye::after {
-            content: '';
-            width: 7px;
-            height: 7px;
-            background-color: #fff;
-            border-radius: 50%;
-            position: absolute;
-            top: 3px;
-            left: 4px;
-        }
-
-        .mouth {
-            width: 16px;
-            height: 8px;
-            border: 3px solid #2c3e50;
-            border-top: none;
-            border-radius: 0 0 10px 10px;
-            position: absolute;
-            top: 75px;
-            left: 92px;
-        }
-
-        /* ================= 貓咪顏色樣式 ================= */
-
-        /* 1. 黑貓 (Black Cat) */
-        .cat-black .cat-body, .cat-black .ear { background-color: #2c3e50; }
-        .cat-black .eye { background-color: #f1c40f; } /* 金眼 */
-        .cat-black .mouth { border-color: #f1c40f; }
-
-        /* 2. 白貓 (White Cat) */
-        .cat-white .cat-body, .cat-white .ear { background-color: #ffffff; }
-        .cat-white .cat-body { box-shadow: inset -10px -10px 0px rgba(0,0,0,0.02), 0 0 5px rgba(0,0,0,0.1); }
-
-        /* 3. 三花貓 (Calico Cat) - 使用純 CSS 斑點 */
-        .cat-calico .cat-body {
-            background-color: #ffffff; /* 底色白 */
-            background-image: 
-                radial-gradient(circle at 20px 30px, #fca441 40px, transparent 41px), /* 橘斑 */
-                radial-gradient(circle at 150px 50px, #2c3e50 50px, transparent 51px), /* 黑斑 */
-                radial-gradient(circle at 100px 140px, #fca441 30px, transparent 31px); /* 橘斑 */
-        }
-        .cat-calico .ear.left { background-color: #2c3e50; }
-        .cat-calico .ear.right { background-color: #fca441; }
-
-
-        /* ================= 投餵特效 ================= */
-        .cake-projectile {
-            position: absolute;
-            font-size: 25px;
-            z-index: 50;
-            transition: transform 0.5s ease-in, opacity 0.5s;
-            pointer-events: none;
-        }
-    </style>
-</head>
-<body id="game-zone">
-
-    <div id="ui-header">
-        <h1>🐱 圓滾滾貓咪大胃王之旅 🍰</h1>
-        <p>搜集不同顏色的肥貓！</p>
-        <button id="startBtn" onclick="startGame()">開始認養第一隻貓</button>
-    </div>
-
-    <div id="status-display"></div>
-
-    <div class="cat-wrapper" id="cat">
-        <div class="ear left"></div>
-        <div class="ear right"></div>
-        <div class="cat-body">
-            <div class="eye left"></div>
-            <div class="eye right"></div>
-            <div class="mouth"></div>
-        </div>
-    </div>
-
-    <script>
-        let gameActive = false;
-        let catScale = 0.1;    // 初始縮放倍率 (20px)
-        const maxScale = 7.0;  // 放大到 7 倍時視為完全填滿畫面
-        let cakeCount = 0;
-        let currentCatColor = '';
-        const catColors = ['black', 'calico', 'white'];
-        const catColorNames = { 'black': '黑貓', 'calico': '三花貓', 'white': '白貓' };
-        
-        const uiHeader = document.getElementById('ui-header');
-        const statusDisplay = document.getElementById('status-display');
-        const catElement = document.getElementById('cat');
-        const gameZone = document.getElementById('game-zone');
-
-        // 開始遊戲
-        function startGame() {
-            gameActive = true;
-            uiHeader.style.opacity = '0';
-            uiHeader.style.visibility = 'hidden'; // 隱藏標題
-            statusDisplay.style.display = 'block';
-            catElement.style.display = 'block';
-            
-            generateNewCat(); // 生成第一隻貓
-            
-            // 啟用滑鼠投餵
-            gameZone.addEventListener('click', throwCake);
-        }
-
-        // 生成下一隻貓
-        function generateNewCat() {
-            cakeCount = 0;
-            catScale = 0.1; // 重置大小
-            catElement.style.transform = `translate(-50%, -50%) scale(${catScale})`;
-            
-            // 隨機選擇顏色
-            currentCatColor = catColors[Math.floor(Math.random() * catColors.length)];
-            
-            // 清除之前的顏色 class
-            catElement.classList.remove('cat-black', 'cat-calico', 'cat-white');
-            // 添加新顏色 class
-            catElement.classList.add(`cat-${currentCatColor}`);
-            
-            updateStatus();
-        }
-
-        function updateStatus() {
-            statusDisplay.innerText = `當前：${catColorNames[currentCatColor]} (吃了 ${cakeCount} 個蛋糕)`;
-        }
-
-        // 滑鼠投餵邏輯
-        function throwCake(e) {
-            if (!gameActive || catScale >= maxScale) return;
-
-            const clickX = e.clientX;
-            const clickY = e.clientY;
-
-            // 1. 在点击处生成蛋糕
-            const cake = document.createElement('div');
-            cake.classList.add('cake-projectile');
-            cake.innerText = '🍰';
-            cake.style.left = clickX + 'px';
-            cake.style.top = clickY + 'px';
-            document.body.appendChild(cake);
-
-            // 2. 蛋糕飞向猫咪中心动画
-            const catRect = catElement.getBoundingClientRect();
-            const catCenterX = catRect.left + catRect.width / 2;
-            const catCenterY = catRect.top + catRect.height / 2;
-
-            const deltaX = catCenterX - clickX;
-            const deltaY = catCenterY - clickY;
-
-            // 启动动画 (CSS transition)
-            requestAnimationFrame(() => {
-                cake.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.5)`;
-                cake.style.opacity = '0';
-            });
-
-            // 3. 蛋糕「吃到」后的逻辑
-            setTimeout(() => {
-                cake.remove();
-                if (gameActive) feedCat();
-            }, 500);
-        }
-
-        function feedCat() {
-            cakeCount++;
-            
-            // 每次投餵，貓咪等比例放大 0.3 倍
-            catScale += 0.3;
-            catElement.style.transform = `translate(-50%, -50%) scale(${catScale})`;
-
-            updateStatus();
-
-            // 如果完全填滿畫面
-            if (catScale >= maxScale) {
-                gameActive = false; // 暫停遊戲邏輯
-                
-                // 顯示通關（滿腹）文字
-                statusDisplay.innerText = `🎉 碰！${catColorNames[currentCatColor]}已經徹底圓滚滚地填滿了畫面！`;
-                
-                // 稍等 1.5 秒，貓咪「滿腹 disappearing」，生成下一隻
-                setTimeout(() => {
-                    catElement.style.display = 'none';
-                    setTimeout(() => {
-                        catElement.style.display = 'block';
-                        gameActive = true;
-                        generateNewCat();
-                    }, 500); // 貓咪消失的空窗期
-                }, 1500);
-            }
-        }
-    </script>
-</body>
-</html>
+            width: 200px
