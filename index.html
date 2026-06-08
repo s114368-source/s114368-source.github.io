@@ -1,6 +1,5 @@
 HTML
 
-
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -17,7 +16,6 @@ HTML
             align-items: center;
             height: 100vh;
             margin: 0;
-            /* 防止手機網頁被亂縮放或重整 */
             touch-action: manipulation; 
         }
 
@@ -69,12 +67,11 @@ HTML
             cursor: not-allowed;
         }
 
-        /* 這是香菇生長的地圖 */
         #farm {
             width: 400px;
             height: 400px;
-            background-color: #8bc34a; /* 草地顏色 */
-            border: 5px solid #5d4037; /* 土壤邊框 */
+            background-color: #8bc34a; 
+            border: 5px solid #5d4037; 
             border-radius: 10px;
             margin-top: 20px;
             position: relative;
@@ -88,16 +85,33 @@ HTML
             cursor: grab;
             user-select: none;
             animation: popUp 0.2s ease-out;
-            transform-origin: bottom center; /* 讓拉長特效從底部延伸 */
+            transform-origin: bottom center; 
         }
 
         .mushroom:active {
             cursor: grabbing;
         }
 
-        /* 當香菇被按住準備拔起時的視覺回饋 */
         .mushroom.dragging {
-            filter: brightness(1.1);
+            /* 拖曳時稍微增加亮度 */
+            filter: brightness(1.1) !important; 
+        }
+
+        /* --- 🎨 香菇顏色變形特效 (利用 CSS hue-rotate 濾鏡) --- */
+        
+        /* 1. 金色香菇：將紅香菇旋轉色相，並提高飽和度與亮度，調出閃亮金感 */
+        .m-gold {
+            filter: hue-rotate(45deg) saturate(3) brightness(1.2);
+        }
+
+        /* 2. 綠色香菇：將紅香菇旋轉色相 120 度變成毒綠色 */
+        .m-green {
+            filter: hue-rotate(120deg) saturate(1.5);
+        }
+
+        /* 3. 時鐘香菇（維持原樣或你想改色也可以，這裡維持預設） */
+        .m-time {
+            /* 保持原樣 */
         }
 
         @keyframes popUp {
@@ -133,12 +147,12 @@ HTML
         let mushroomInterval;
         let isPlaying = false;
 
-        // 🍄 定義香菇品種與設定
+        // 🍄 定義香菇品種與設定（外觀統一用 🍄，改用 className 來區分顏色）
         const MUSHROOM_TYPES = [
-            { emoji: '🍄', scoreEffect: 1,  timeEffect: 0, weight: 60 }, // 60% 機率：一般香菇
-            { emoji: '🍄‍🟫', scoreEffect: 3,  timeEffect: 0, weight: 15 }, // 15% 機率：金香菇 (+3分)
-            { emoji: '🤢', scoreEffect: -5, timeEffect: 0, weight: 20 }, // 20% 機率：毒香菇 (-5分)
-            { emoji: '⏰', scoreEffect: 0,  timeEffect: 3, weight: 5  }  // 5%  機率：時鐘菇 (+3秒)
+            { emoji: '🍄', className: '',        scoreEffect: 1,  timeEffect: 0, weight: 60 }, // 一般紅香菇
+            { emoji: '🍄', className: 'm-gold',  scoreEffect: 3,  timeEffect: 0, weight: 15 }, // 金色香菇 (+3分)
+            { emoji: '🍄', className: 'm-green', scoreEffect: -5, timeEffect: 0, weight: 20 }, // 綠色香菇 (-5分)
+            { emoji: '⏰', className: 'm-time',  scoreEffect: 0,  timeEffect: 3, weight: 5  }  // 時鐘菇 (+3秒)
         ];
 
         startBtn.addEventListener('click', startGame);
@@ -146,7 +160,6 @@ HTML
         function startGame() {
             if (isPlaying) return;
             
-            // 初始化
             score = 0;
             timeLeft = 15;
             scoreDisplay.innerText = score;
@@ -155,18 +168,15 @@ HTML
             startBtn.disabled = true;
             farm.innerHTML = '';
 
-            // 倒數計時器
             gameInterval = setInterval(() => {
                 timeLeft--;
                 timeDisplay.innerText = timeLeft;
                 if (timeLeft <= 0) endGame();
             }, 1000);
 
-            // 每 600 毫秒長出一朵新香菇
             mushroomInterval = setInterval(spawnMushroom, 600);
         }
 
-        // 依權重隨機抽選香菇
         function getRandomMushroomType() {
             let totalWeight = MUSHROOM_TYPES.reduce((sum, type) => sum + type.weight, 0);
             let randomNum = Math.random() * totalWeight;
@@ -183,9 +193,13 @@ HTML
             const mType = getRandomMushroomType();
             const mushroom = document.createElement('div');
             mushroom.classList.add('mushroom');
+            
+            // 如果有特定的顏色樣式，就加上去
+            if (mType.className) {
+                mushroom.classList.add(mType.className);
+            }
             mushroom.innerText = mType.emoji;
 
-            // 隨機定位（扣除香菇本身大小）
             const maxX = farm.clientWidth - 45;
             const maxY = farm.clientHeight - 45;
             const randomX = Math.floor(Math.random() * maxX);
@@ -194,15 +208,14 @@ HTML
             mushroom.style.left = `${randomX}px`;
             mushroom.style.top = `${randomY}px`;
 
-            // --- 📥 核心：拖曳拔菇邏輯 📥 ---
+            // 拖曳邏輯
             let startY = 0;
             let isPulling = false;
-            const PULL_THRESHOLD = 40; // 往上拉 40 像素判定成功
+            const PULL_THRESHOLD = 40;
 
             const onStart = (e) => {
                 isPulling = true;
                 mushroom.classList.add('dragging');
-                // 兼容滑鼠與手機觸控
                 startY = e.clientY || e.touches[0].clientY;
                 
                 window.addEventListener('mousemove', onMove);
@@ -213,19 +226,15 @@ HTML
 
             const onMove = (e) => {
                 if (!isPulling) return;
-                
-                // 阻止網頁畫面跟著手機手勢滾動
                 if (e.cancelable) e.preventDefault(); 
 
                 const currentY = e.clientY || e.touches[0].clientY;
-                const pullDistance = startY - currentY; // 往上滑算正值
+                const pullDistance = startY - currentY; 
 
-                // 動態Q彈拉長效果
                 if (pullDistance > 0) {
                     mushroom.style.transform = `scaleY(${1 + pullDistance/80}) translateY(${-pullDistance/3}px)`;
                 }
 
-                // 成功拔出
                 if (pullDistance >= PULL_THRESHOLD) {
                     successPull();
                 }
@@ -258,12 +267,9 @@ HTML
                 mushroom.remove();
             };
 
-            // 綁定事件
             mushroom.addEventListener('mousedown', onStart);
             mushroom.addEventListener('touchstart', onStart, { passive: true });
-            // ------------------------------------
 
-            // 2.5 秒內沒拔掉自然消失
             setTimeout(() => {
                 if (mushroom.parentNode === farm) {
                     cleanListeners();
@@ -274,7 +280,6 @@ HTML
             farm.appendChild(mushroom);
         }
 
-        // 彈出加扣分浮動文字
         function showFloatingText(x, y, type) {
             const text = document.createElement('div');
             text.style.position = 'absolute';
