@@ -33,23 +33,21 @@
     </div>
 
     <script>
-        const canvas = document.getElementById("gameCanvas");
-        const ctx = canvas.getContext("2d");
-        const scoreEl = document.getElementById("score");
-        const highScoreEl = document.getElementById("high-score");
-        const restartBtn = document.getElementById("restartBtn");
+        // 確保網頁完全載入後才執行 JavaScript
+        window.onload = function() {
+            const canvas = document.getElementById("gameCanvas");
+            const ctx = canvas.getContext("2d");
+            const scoreEl = document.getElementById("score");
+            const highScoreEl = document.getElementById("high-score");
+            const restartBtn = document.getElementById("restartBtn");
 
-        const gridSize = 20;
-        const tileCount = canvas.width / gridSize;
+            const gridSize = 20;
+            const tileCount = canvas.width / gridSize;
 
-        let snake = [];
-        let food = { x: 0, y: 0 };
-        let dx = gridSize;
-        let dy = 0;
-        let score = 0;
-        let highScore = localStorage.getItem("giraffe_high_score") || 0;
-        let gameInterval;
-        const gameSpeed = 120;
-        let gameActive = true;
-
-        highScoreEl.innerText = highScore;
+            let snake = [];
+            let food = { x: 0, y: 0 };
+            let dx = gridSize;
+            let dy = 0;
+            let score = 0;
+            let highScore = localStorage.getItem("giraffe_high_score") || 0;
+            let game
