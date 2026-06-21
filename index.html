@@ -1,325 +1,55 @@
-
-
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>開心拔香菇大賽！</title>
+    <title>長頸鹿大草原覓食記 - Giraffe Snake</title>
     <style>
-        /* --- 網頁樣式 (CSS) --- */
-        body {
-            background-color: #e6f4ea;
-            font-family: 'Arial', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            touch-action: manipulation; 
-        }
-
-        .game-container {
-            text-align: center;
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-        }
-
-        h1 {
-            color: #2d5a27;
-            margin-bottom: 10px;
-        }
-
-        .stats {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 15px;
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
-
-        .stat-box {
-            background: #f0f0f0;
-            padding: 8px 15px;
-            border-radius: 8px;
-            min-width: 120px;
-        }
-
-        #start-btn {
-            font-size: 1.1rem;
-            padding: 10px 25px;
-            background-color: #4caf50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        #start-btn:hover {
-            background-color: #45a049;
-        }
-
-        #start-btn:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-
-        #farm {
-            width: 400px;
-            height: 400px;
-            background-color: #8bc34a; 
-            border: 5px solid #5d4037; 
-            border-radius: 10px;
-            margin-top: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* 香菇本體基本設定 */
-        .mushroom {
-            font-size: 40px;
-            position: absolute;
-            cursor: grab;
-            user-select: none;
-            animation: popUp 0.2s ease-out;
-            transform-origin: bottom center; 
-        }
-
-        .mushroom:active {
-            cursor: grabbing;
-        }
-
-        .mushroom.dragging {
-            /* 拖曳時稍微增加亮度 */
-            filter: brightness(1.1) !important; 
-        }
-
-        /* --- 🎨 香菇顏色變形特效 (利用 CSS hue-rotate 濾鏡) --- */
-        
-        /* 1. 金色香菇：將紅香菇旋轉色相，並提高飽和度與亮度，調出閃亮金感 */
-        .m-gold {
-            filter: hue-rotate(45deg) saturate(3) brightness(1.2);
-        }
-
-        /* 2. 綠色香菇：將紅香菇旋轉色相 120 度變成毒綠色 */
-        .m-green {
-            filter: hue-rotate(120deg) saturate(1.5);
-        }
-
-        /* 3. 時鐘香菇（維持原樣或你想改色也可以，這裡維持預設） */
-        .m-time {
-            /* 保持原樣 */
-        }
-
-        @keyframes popUp {
-            0% { transform: scale(0); }
-            100% { transform: scale(1); }
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); background-color: #f7e7ce; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: #4a3728; }
+        .game-container { background: #faf4e8; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(74, 55, 40, 0.15); text-align: center; max-width: 460px; width: 100%; border: 5px solid #debc85; }
+        h1 { font-size: 24px; margin-bottom: 15px; color: #6b4c1b; }
+        .score-board { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 16px; font-weight: bold; background-color: #f0e2cc; padding: 10px 15px; border-radius: 10px; }
+        #gameCanvas { background-color: #aad46e; border: 4px solid #8cb847; border-radius: 10px; box-shadow: inset 0 0 20px rgba(0,0,0,0.1); display: block; margin: 0 auto; }
+        .controls-info { margin-top: 15px; font-size: 13px; color: #7a634e; line-height: 1.6; }
+        .controls-info span { background: #debc85; padding: 2px 6px; border-radius: 4px; color: white; font-weight: bold; }
+        #restartBtn { margin-top: 15px; padding: 10px 25px; font-size: 16px; font-weight: bold; color: white; background-color: #d97706; border: none; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
+        #restartBtn:hover { background-color: #b45309; }
     </style>
 </head>
 <body>
-
     <div class="game-container">
-        <h1>🍄 瘋狂拔香菇 🍄</h1>
-        <div class="stats">
-            <div class="stat-box">剩餘時間: <span id="time">15</span> 秒</div>
-            <div class="stat-box">積分: <span id="score">0</span> 分</div>
+        <h1>🦒 長頸鹿大草原覓食記 🍃</h1>
+        <div class="score-board">
+            <span>吃到的樹葉：<span id="score">0</span> 叢</span>
+            <span>最高紀錄：<span id="high-score">0</span></span>
         </div>
-        
-        <button id="start-btn">開始遊戲</button>
-
-        <div id="farm"></div>
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+        <div class="controls-info">
+            <p>⌨️ 使用鍵盤方向鍵 <span>↑</span> <span>↓</span> <span>←</span> <span>→</span> 控制長頸鹿移動</p>
+            <p>避免撞到牆壁或自己的長脖子！</p>
+        </div>
+        <button id="restartBtn" style="display: none;">重新開始</button>
     </div>
 
     <script>
-        // --- 遊戲邏輯 (JavaScript) ---
-        const farm = document.getElementById('farm');
-        const scoreDisplay = document.getElementById('score');
-        const timeDisplay = document.getElementById('time');
-        const startBtn = document.getElementById('start-btn');
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const scoreEl = document.getElementById("score");
+        const highScoreEl = document.getElementById("high-score");
+        const restartBtn = document.getElementById("restartBtn");
 
+        const gridSize = 20;
+        const tileCount = canvas.width / gridSize;
+
+        let snake = [];
+        let food = { x: 0, y: 0 };
+        let dx = gridSize;
+        let dy = 0;
         let score = 0;
-        let timeLeft = 15;
+        let highScore = localStorage.getItem("giraffe_high_score") || 0;
         let gameInterval;
-        let mushroomInterval;
-        let isPlaying = false;
+        const gameSpeed = 120;
+        let gameActive = true;
 
-        // 🍄 定義香菇品種與設定（外觀統一用 🍄，改用 className 來區分顏色）
-        const MUSHROOM_TYPES = [
-            { emoji: '🍄', className: '',        scoreEffect: 1,  timeEffect: 0, weight: 60 }, // 一般紅香菇
-            { emoji: '🍄', className: 'm-gold',  scoreEffect: 3,  timeEffect: 0, weight: 15 }, // 金色香菇 (+3分)
-            { emoji: '🍄', className: 'm-green', scoreEffect: -5, timeEffect: 0, weight: 20 }, // 綠色香菇 (-5分)
-            { emoji: '⏰', className: 'm-time',  scoreEffect: 0,  timeEffect: 3, weight: 5  }  // 時鐘菇 (+3秒)
-        ];
-
-        startBtn.addEventListener('click', startGame);
-
-        function startGame() {
-            if (isPlaying) return;
-            
-            score = 0;
-            timeLeft = 15;
-            scoreDisplay.innerText = score;
-            timeDisplay.innerText = timeLeft;
-            isPlaying = true;
-            startBtn.disabled = true;
-            farm.innerHTML = '';
-
-            gameInterval = setInterval(() => {
-                timeLeft--;
-                timeDisplay.innerText = timeLeft;
-                if (timeLeft <= 0) endGame();
-            }, 1000);
-
-            mushroomInterval = setInterval(spawnMushroom, 600);
-        }
-
-        function getRandomMushroomType() {
-            let totalWeight = MUSHROOM_TYPES.reduce((sum, type) => sum + type.weight, 0);
-            let randomNum = Math.random() * totalWeight;
-            for (let type of MUSHROOM_TYPES) {
-                if (randomNum < type.weight) return type;
-                randomNum -= type.weight;
-            }
-            return MUSHROOM_TYPES[0];
-        }
-
-        function spawnMushroom() {
-            if (!isPlaying) return;
-
-            const mType = getRandomMushroomType();
-            const mushroom = document.createElement('div');
-            mushroom.classList.add('mushroom');
-            
-            // 如果有特定的顏色樣式，就加上去
-            if (mType.className) {
-                mushroom.classList.add(mType.className);
-            }
-            mushroom.innerText = mType.emoji;
-
-            const maxX = farm.clientWidth - 45;
-            const maxY = farm.clientHeight - 45;
-            const randomX = Math.floor(Math.random() * maxX);
-            const randomY = Math.floor(Math.random() * maxY);
-
-            mushroom.style.left = `${randomX}px`;
-            mushroom.style.top = `${randomY}px`;
-
-            // 拖曳邏輯
-            let startY = 0;
-            let isPulling = false;
-            const PULL_THRESHOLD = 40;
-
-            const onStart = (e) => {
-                isPulling = true;
-                mushroom.classList.add('dragging');
-                startY = e.clientY || e.touches[0].clientY;
-                
-                window.addEventListener('mousemove', onMove);
-                window.addEventListener('touchmove', onMove, { passive: false });
-                window.addEventListener('mouseup', onEnd);
-                window.addEventListener('touchend', onEnd);
-            };
-
-            const onMove = (e) => {
-                if (!isPulling) return;
-                if (e.cancelable) e.preventDefault(); 
-
-                const currentY = e.clientY || e.touches[0].clientY;
-                const pullDistance = startY - currentY; 
-
-                if (pullDistance > 0) {
-                    mushroom.style.transform = `scaleY(${1 + pullDistance/80}) translateY(${-pullDistance/3}px)`;
-                }
-
-                if (pullDistance >= PULL_THRESHOLD) {
-                    successPull();
-                }
-            };
-
-            const onEnd = () => {
-                isPulling = false;
-                mushroom.classList.remove('dragging');
-                mushroom.style.transform = ''; 
-                cleanListeners();
-            };
-
-            const cleanListeners = () => {
-                window.removeEventListener('mousemove', onMove);
-                window.removeEventListener('touchmove', onMove);
-                window.removeEventListener('mouseup', onEnd);
-                window.removeEventListener('touchend', onEnd);
-            };
-
-            const successPull = () => {
-                cleanListeners();
-                score += mType.scoreEffect;
-                timeLeft += mType.timeEffect;
-                if (score < 0) score = 0;
-
-                scoreDisplay.innerText = score;
-                timeDisplay.innerText = timeLeft;
-
-                showFloatingText(randomX, randomY, mType);
-                mushroom.remove();
-            };
-
-            mushroom.addEventListener('mousedown', onStart);
-            mushroom.addEventListener('touchstart', onStart, { passive: true });
-
-            setTimeout(() => {
-                if (mushroom.parentNode === farm) {
-                    cleanListeners();
-                    mushroom.remove();
-                }
-            }, 2500);
-
-            farm.appendChild(mushroom);
-        }
-
-        function showFloatingText(x, y, type) {
-            const text = document.createElement('div');
-            text.style.position = 'absolute';
-            text.style.left = `${x + 10}px`;
-            text.style.top = `${y - 10}px`;
-            text.style.fontWeight = 'bold';
-            text.style.fontSize = '1.2rem';
-            text.style.pointerEvents = 'none';
-            text.style.transition = 'all 0.5s ease-out';
-            text.style.zIndex = '10';
-
-            if (type.scoreEffect > 0) {
-                text.innerText = `+${type.scoreEffect} ✨`;
-                text.style.color = '#4caf50';
-            } else if (type.scoreEffect < 0) {
-                text.innerText = `${type.scoreEffect} 💥`;
-                text.style.color = '#f44336';
-            } else if (type.timeEffect > 0) {
-                text.innerText = `+${type.timeEffect}s ⏰`;
-                text.style.color = '#2196f3';
-            }
-
-            farm.appendChild(text);
-
-            setTimeout(() => {
-                text.style.transform = 'translateY(-40px)';
-                text.style.opacity = '0';
-            }, 50);
-
-            setTimeout(() => { text.remove(); }, 550);
-        }
-
-        function endGame() {
-            isPlaying = false;
-            clearInterval(gameInterval);
-            clearInterval(mushroomInterval);
-            startBtn.disabled = false;
-            farm.innerHTML = '';
-            alert(`遊戲結束！你的最終得分是：${score} 分！🍄👑`);
-        }
-    </script>
-</body>
-</html>
+        highScoreEl.innerText = highScore;
